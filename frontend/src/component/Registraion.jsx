@@ -42,8 +42,9 @@ const Registration = () => {
           formData
         );
         setToken(response.data.token);
-        toast.success(response.data.message);
         navigate("/");
+        toast.success(response.data.message);
+    
         setFormData({ username: "", phoneNumber: "", password: "" });
         setErrors({});
       } catch (error) {

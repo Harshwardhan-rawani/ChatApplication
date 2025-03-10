@@ -38,8 +38,9 @@ const Login = () => {
             try {
                 const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, formData);
                 setToken(response.data.token);
-                toast.success(response.data.message);
                 navigate("/");
+                toast.success(response.data.message);
+               
                 setFormData({ phoneNumber: "", password: "" });
                 setErrors({});
             } catch (error) {
