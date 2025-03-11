@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const createUser = async (req, res) => {
   try {
     const { id, contactId, username, phoneNumber } = req.body;
-    console.log(req.body);
     
     if (!id || !contactId || !username || !phoneNumber) {
       return res.status(400).json({ message: "ID, Contact ID, Username, and Phone Number are required" });
