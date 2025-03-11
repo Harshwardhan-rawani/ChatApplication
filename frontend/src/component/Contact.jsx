@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
@@ -7,18 +7,19 @@ import { io } from "socket.io-client";
 import { IoAddCircleSharp } from "react-icons/io5";
 import Contactloading from "./Contactloading";
 const socket = io(`${import.meta.env.VITE_API_URL}`);
-import { FaClock, FaUserFriends, FaUsers, FaThList } from "react-icons/fa";
+import { FaClock, FaUserFriends, FaThList } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import { toast } from 'react-toastify';
 import { UserX } from "lucide-react";
-
+import { AiOutlineLogout } from "react-icons/ai";
+import { AuthContext } from "../context/AuthContext";
 function Contact({user,fun,funself}) {
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Contact");
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState({});
-
+   const {logout} = useContext(AuthContext)
   const categories = [
     { name: "Active", icon: <FaClock /> },
     { name: "Contact", icon: <FaUserFriends /> },
@@ -93,9 +94,10 @@ function Contact({user,fun,funself}) {
     <>
   
     <div className="w-full h-full max-w-lg bg-[#F9FBFC]  rounded-md py-5 px-2 md:px-0 mx-auto md:max-w-md sm:max-w-sm cursor-pointer">
-      <div className="flex items-center h-fit space-x-4 pb-4 border-b border-gray-200">
+      <div className="flex items-center justify-between h-fit pb-4 border-b border-gray-200">
         {user ? (
           <>
+            <div className="flex items-center space-x-4">
             <img
               className="w-12 h-12 rounded-full object-cover"
               src={user.profileImage || "/default-profile.jpg"}
@@ -110,6 +112,14 @@ function Contact({user,fun,funself}) {
               <h2 className="text-lg font-semibold ">{user.username}</h2>
               <p className="text-sm">View & edit your profile</p>
             </div>
+            </div>
+            <motion.button
+         whileTap={{ scale: 0.9 }} 
+         whileHover={{ scale: 1.1 }}
+      className=""
+    >
+   <AiOutlineLogout className="text-[#56A7A7] text-3xl" onClick={()=>{logout()}} />
+    </motion.button>
           </>
         ) : (
          <Contactloading/>
