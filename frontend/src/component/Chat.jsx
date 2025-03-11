@@ -116,7 +116,7 @@ function Chat() {
     if (userId) {
         socket.on("updateUserStatus", ({ onlineUsers }) => {
             setOnlineUsers(onlineUsers); 
-            console.log(onlineUsers)
+           
         });
     }
 
@@ -124,7 +124,6 @@ function Chat() {
         socket.off("updateUserStatus");
     };
 }, [userId]);
-console.log(chats)
 
     useEffect(() => {
         socket.on("receiveMessage", (data) => {
@@ -173,7 +172,6 @@ console.log(chats)
     
     const messages = chats[params.phoneNumber] || [];
 
-    // Group messages by date
     const groupedMessages = messages.reduce((acc, msg) => {
       const date = msg.date; // Extract date
       if (!acc[date]) {
@@ -185,7 +183,22 @@ console.log(chats)
     const handleToggleSidebar = () => {
         setShowSidebar(!showSidebar);
     };
+  
 
+    useEffect(() => {
+      if (!socket) return;
+    
+ 
+    
+      socket.on("messagesRead", ({ senderId, receiverId }) => {
+        console.log(`Messages from ${senderId} to ${receiverId} are now read`);
+      });
+    
+      return () => {
+        socket.off("messagesRead");
+      };
+    }, [socket]);
+    
     const handleProfilehideshow=()=>{
          setHideProfile(!hideProfile)
     }
@@ -220,7 +233,7 @@ console.log(chats)
         
         
                     {/* Main Chat */}
-                    <div className="flex-1 flex flex-col bg-[#56A7A7] shadow-lg rounded-lg">
+                    <div className="flex-1 flex flex-col h-screen bg-[#56A7A7] shadow-lg rounded-lg">
                         {/* Header */}
                         <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-[#F9FBFC]">
                             <div className="flex items-center space-x-4">

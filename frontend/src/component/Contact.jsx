@@ -14,11 +14,13 @@ import { UserX } from "lucide-react";
 import { AiOutlineLogout } from "react-icons/ai";
 import { AuthContext } from "../context/AuthContext";
 function Contact({user,fun,funself}) {
+ 
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Contact");
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState({});
+  const [unreadCounts, setUnreadCounts] = useState({});
    const {logout} = useContext(AuthContext)
   const categories = [
     { name: "Active", icon: <FaClock /> },
@@ -90,10 +92,25 @@ function Contact({user,fun,funself}) {
     contact.username.toLowerCase().startsWith(searchTerm.toLowerCase().trim())
   );
 
+
+  const markMessagesAsRead = (senderId, receiverId) => {
+    if (!socket) return;
+  
+ 
+    socket.emit("markMessagesAsRead", { senderId, receiverId });
+  
+  
+    setUnreadCounts((prevCounts) => ({
+      ...prevCounts,
+      [senderId]: 0, 
+    }));
+  };
+
+
   return (
     <>
   
-    <div className="w-full h-full max-w-lg bg-[#F9FBFC]  rounded-md py-5 px-2 md:px-0 mx-auto md:max-w-md sm:max-w-sm cursor-pointer">
+    <div className="w-full h-screen max-w-lg bg-[#F9FBFC]  rounded-md py-5 px-2 md:px-0 mx-auto md:max-w-md sm:max-w-sm cursor-pointer">
       <div className="flex items-center justify-between h-fit pb-4 border-b border-gray-200">
         {user ? (
           <>
@@ -178,7 +195,7 @@ function Contact({user,fun,funself}) {
                       }}
                     />
                     <FaUserCircle className="w-10 h-10 text-gray-500 hidden" />
-                    <Link to={`/${contact.phoneNumber}`} className="flex-1" onClick={()=>{fun()}}>
+                    <Link to={`/${contact.phoneNumber}`} className="flex-1" onClick={()=>{fun(); markMessagesAsRead(user.id,contact.phoneNumber)}}>
                       <p className="text-sm font-medium  truncate">{contact.username}</p>
                       <p className="text-xs text-gray-400 truncate">{contact.phoneNumber}</p>
                     </Link>
