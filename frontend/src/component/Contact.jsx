@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle,FaCheck } from "react-icons/fa";
 import { io } from "socket.io-client";
 import { IoAddCircleSharp } from "react-icons/io5";
 import Contactloading from "./Contactloading";
@@ -13,85 +13,108 @@ import { toast } from 'react-toastify';
 import { UserX } from "lucide-react";
 import { AiOutlineLogout } from "react-icons/ai";
 import { AuthContext } from "../context/AuthContext";
-function Contact({user,fun,funself}) {
- 
+import { useData } from "../context/UserContext";
+function Contact({user,fun,funself,ihs}) {
+   const {Alluser} = useData()
+
+
   const [contacts, setContacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Contact");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState({});
   const [unreadCounts, setUnreadCounts] = useState({});
    const {logout} = useContext(AuthContext)
-  const categories = [
-    { name: "Active", icon: <FaClock /> },
-    { name: "Contact", icon: <FaUserFriends /> },
-    { name: "All", icon: <FaThList /> },
+   const [addedUsers, setAddedUsers] = useState(new Set()); // Stores user IDs
 
-  ]
-  
+   const handleAddUser = (id) => {
+     createUser(id);
+ 
+     setAddedUsers((prevAddedUsers) => {
+       const newSet = new Set(prevAddedUsers);
+       if (newSet.has(id)) {
+         newSet.delete(id); // Remove if already added
+       } else {
+         newSet.add(id); // Add if not in the set
+       }
+       return newSet;
+     });
+   };
+ 
 
-  const createUser = async (id,name,number) => {
+  const createUser = async (id) => {
   
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/contact`, {
         id: user.id,
         contactId: id,
-        username : name, 
-        phoneNumber: number,
       });
 
       console.log("User Created:", response.data);
-      toast.success(response.data.message);
+     
     } catch (error) {
       console.error("Error creating user:", error);
-      toast.warning(error.response.data.message);
+   
     }
   };
   
-  useEffect(() => {
-    const fetchContacts = async () => {
-      const token = localStorage.getItem("token");
-      setLoading(true);
+
+  const fetchContacts = async () => {
+    setLoading(true);
+    const token = localStorage.getItem("token");
   
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/contact?category=${selectedCategory}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+    try {
+      let fetchedData = [];
   
-        let filteredData = response.data;
-   
-        if (selectedCategory === "Active") {
-          filteredData = filteredData.filter((user) => onlineUsers[user.phoneNumber] === "online");
-        }
+      if (selectedCategory === "All") {
+        fetchedData = Alluser || [];
+      } 
+      else if (selectedCategory === "Contact") {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/contact`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
   
-        setContacts(filteredData);
-      } catch (error) {
-        console.error("Error fetching contacts:", error);
-      } finally {
-        setLoading(false);
+      
+        const allUserIds = new Set(response.data.map((user) => String(user.id)));
+      
+        fetchedData = Alluser?.filter((contact) => allUserIds.has(String(contact._id)));
+      } 
+      else if (selectedCategory === "Active") {
+        // Show only online users
+        fetchedData = contacts.filter((user )=> onlineUsers?.[user.phoneNumber]=== "online");
       }
-    };
   
+      setContacts(fetchedData);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  
+  useEffect(() => {
     fetchContacts();
-  }, [selectedCategory, onlineUsers])
+  }, [selectedCategory, Alluser, onlineUsers]); 
+  
+  
+
+  
 
   useEffect(() => {
-    socket.on("updateUserStatus", ({ onlineUsers }) => {
-      setOnlineUsers(onlineUsers);
+    socket.on("updateUserStatus", (data) => {
+      setOnlineUsers(data.onlineUsers);
     });
-
+  
     return () => {
       socket.off("updateUserStatus");
     };
   }, []);
+  
 
-  const filteredContacts = contacts.filter((contact) =>
-    contact.username.toLowerCase().startsWith(searchTerm.toLowerCase().trim())
+  const filteredContacts = (contacts || []).filter((contact) =>
+    contact.username?.toLowerCase().startsWith(searchTerm.toLowerCase().trim())
   );
-
 
   const markMessagesAsRead = (senderId, receiverId) => {
     if (!socket) return;
@@ -109,15 +132,17 @@ function Contact({user,fun,funself}) {
 
   return (
     <>
-  
+   
     <div className="w-full h-screen max-w-lg bg-[#F9FBFC]  rounded-md py-5 px-2 md:px-0 mx-auto md:max-w-md sm:max-w-sm cursor-pointer">
-      <div className="flex items-center justify-between h-fit pb-4 border-b border-gray-200">
+      <div className="flex items-center justify-between h-fit pb-4 px-1 border-b border-gray-200">
         {user ? (
           <>
+           
             <div className="flex items-center space-x-4">
             <img
               className="w-12 h-12 rounded-full object-cover"
-              src={user.profileImage || "/default-profile.jpg"}
+              src={user.image || "/default-profile.jpg"}
+              onClick={()=>ihs()}
               alt="My Profile"
               onError={(e) => {
                 e.target.style.display = "none";
@@ -127,7 +152,7 @@ function Contact({user,fun,funself}) {
             <FaUserCircle className="w-12 h-12 text-gray-500 hidden" />
             <div  onClick={()=>funself()}>
               <h2 className="text-lg font-semibold ">{user.username}</h2>
-              <p className="text-sm">View & edit your profile</p>
+              <p className="text-sm">{user.about || "Hey, I am new user!"}</p>
             </div>
             </div>
             <motion.button
@@ -154,23 +179,31 @@ function Contact({user,fun,funself}) {
       </div>
   
       <div className="mt-4 grid grid-cols-3 border-b h-fit border-gray-200 cursor-pointer">
-  {categories.map(({ name, icon }) => (
-    <div key={name} className="relative">
-      <h2
-        className={`text-md font-semibold flex justify-center  p-2 hover:bg-[#A0DBDB] transition duration-200  cursor-pointer  ${
-          selectedCategory === name ? "bg-[#56A7A7] text-white" : "text-[#56A7A7]"
-        }`}
-        onClick={() => setSelectedCategory(name)}
-        data-tooltip-id={name}
-      >
-        {icon}
-      </h2>
-      <Tooltip id={name} place="top" effect="solid">
-        {name}
-      </Tooltip>
-    </div>
-  ))}
+  <div
+    className={`flex justify-center text-xl p-1 group cursor-pointer transition duration-200 
+      ${selectedCategory === "Active" ? "bg-[#56A7A7] text-white" : "text-[#56A7A7] hover:bg-[#A0DBDB]"}`}
+    onClick={() => {setSelectedCategory("Active");fetchContacts()}}
+  >
+    <FaClock className={selectedCategory === "Acitve" ? "text-white" : "group-hover:text-white"} />
+  </div>
+  
+  <div
+    className={`flex justify-center text-xl p-1 group cursor-pointer transition duration-200 
+      ${selectedCategory === "Contact" ? "bg-[#56A7A7] text-white" : "text-[#56A7A7] hover:bg-[#A0DBDB]"}`}
+    onClick={() => {setSelectedCategory("Contact"); fetchContacts()}}
+  >
+    <FaUserCircle className={selectedCategory === "Contact" ? "text-white" : "group-hover:text-white"} />
+  </div>
+  
+  <div
+    className={`flex justify-center text-xl p-1 group cursor-pointer transition duration-200 
+      ${selectedCategory === "All" ? "bg-[#56A7A7] text-white" : "text-[#56A7A7] hover:bg-[#A0DBDB]"}`}
+    onClick={() => setSelectedCategory("All")}
+  >
+    <FaThList className={selectedCategory === "All" ? "text-white" : "group-hover:text-white"} />
+  </div>
 </div>
+
       <div className="mt-2">
         {loading ? (
           <div className="flex flex-col space-y-4">
@@ -184,8 +217,9 @@ function Contact({user,fun,funself}) {
             {filteredContacts.map((contact, index) => (
               <li key={index}  className="py-2 hover:bg-[#A0DBDB] rounded-sm transition duration-200">
                 <div className="flex justify-between items-center pe-5">
-                  <div className="flex items-center space-x-4 p-2 relative">
-                    <img
+                  <div className="flex items-center w-full space-x-4 p-2 relative">
+                  <div>
+                  <img
                       className="w-10 h-10 rounded-full object-cover"
                       src={contact.image || "/default-profile.jpg"}
                       alt={contact.username}
@@ -195,7 +229,8 @@ function Contact({user,fun,funself}) {
                       }}
                     />
                     <FaUserCircle className="w-10 h-10 text-gray-500 hidden" />
-                    <Link to={`/${contact.phoneNumber}`} className="flex-1" onClick={()=>{fun(); markMessagesAsRead(user.id,contact.phoneNumber)}}>
+                  </div>
+                    <Link to={`/${contact.phoneNumber}`} className="flex-1" onClick={()=>{fun();}}>
                       <p className="text-sm font-medium  truncate">{contact.username}</p>
                       <p className="text-xs text-gray-400 truncate">{contact.phoneNumber}</p>
                     </Link>
@@ -209,14 +244,19 @@ function Contact({user,fun,funself}) {
                   </div>
                   {selectedCategory === "All" && (
                     <div>
-                              <motion.button
-                        onClick = {()=>createUser(contact._id,contact.username,contact.phoneNumber)}
-                            className="  text-white rounded-full z-20"
-                            whileTap={{ scale: 0.9 }} // Shrinks on click
-                            whileHover={{ scale: 1.1 }} // Slightly enlarges on hover
-                          >
-                            <IoAddCircleSharp className="text-3xl text-[#56A7A7]" />
-                          </motion.button>
+                               <motion.button
+          key={contact._id}
+          onClick={() => handleAddUser(contact._id)}
+          className="text-white rounded-full z-20"
+          whileTap={{ scale: 0.9 }} // Shrinks on click
+          whileHover={{ scale: 1.1 }} // Slightly enlarges on hover
+        >
+          {addedUsers.has(contact._id) ? (
+            <FaCheck className="text-3xl text-[#56A7A7]" />
+          ) : (
+            <IoAddCircleSharp className="text-3xl text-[#56A7A7]" />
+          )}
+        </motion.button>
 
                     </div>
                   )}

@@ -10,6 +10,7 @@ import ProfileCard from "./ProfileCard";
 import ChatLoading from "./ChatLoading";
 import Selfcard from "./Selfcard";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import ImageCard from "./ImageCard";
 
 const socket = io(`${import.meta.env.VITE_API_URL}`);
 
@@ -17,6 +18,7 @@ function Chat() {
     const params = useParams();
     const [message, setMessage] = useState("");
     const [chats, setChats] = useState({});
+    const [profiletrue,setprofiletrue] = useState(true)
     const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -109,8 +111,10 @@ function Chat() {
             }
         };
         fetchUser();
-    }, []);
-
+    }, [profiletrue]);
+  const truefalse = ()=>{
+    setprofiletrue(!profiletrue)
+  }
     
   useEffect(() => {
     if (userId) {
@@ -207,37 +211,66 @@ function Chat() {
  const handleselfhideshow = ()=>{
     setselfhideshow(!selfhideshow)
  }
+ const [hideshowimage,sethideshowimage] = useState(false);
+ const [hideshowimagechat,sethideshowimagechat] = useState(false);
+ const imagehideshow = ()=>{
+     sethideshowimage(!hideshowimage)
+ }
+ const imagehideshowchat = ()=>{
+  sethideshowimagechat(!hideshowimagechat)
+ }
 
     return (
         <>
       
       {user && (
+        <>
   <div 
     className={`${selfhideshow ? "fixed inset-0 flex items-center justify-center z-50 bg-[#ffffff51] bg-opacity-50" : "hidden"}`}
   >
-    <Selfcard User={user} fun={handleselfhideshow} />
+    <Selfcard user={user} fun={handleselfhideshow} tf = {truefalse}/>
+
   </div>
+  <div 
+    className={`${hideshowimage ? "fixed inset-0 flex items-center justify-center z-50 bg-[#ffffff51] bg-opacity-50" : "hidden"}`}
+  >
+    <ImageCard image = {user.image} onClose = {imagehideshow}/>
+
+  </div>
+  </>
+
 )}
 
+      
         <div className="flex space-x-2 h-screen w-full cursor-pointer">
             {/* Sidebar */}
             <div className={`absolute z-10 md:relative w-full md:w-1/3 h-full bg-[#F9FBFC] shadow-md transition-transform ${showSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
-                <Contact fun={handleToggleSidebar} funself={handleselfhideshow} user ={user}/>
+                <Contact fun={handleToggleSidebar} funself={handleselfhideshow} user ={user} ihs={imagehideshow}/>
             </div>
             
          {data ? 
          (  <>
             <div className={`${hideProfile ? "fixed z-50 inset-0 flex items-center justify-center bg-[#ffffff51]  bg-opacity-50" : "hidden"}`}>
-            <ProfileCard name={data.username} phone={data.phoneNumber} isOnline={onlineUsers[params.phoneNumber]} hideshow = {handleProfilehideshow}/>
+            <ProfileCard name={data.username} phone={data.phoneNumber} image={data.image} about={data.about} isOnline={onlineUsers[params.phoneNumber]} hideshow = {handleProfilehideshow}/>
         </div>
         
+        <div 
+    className={`${hideshowimagechat ? "fixed inset-0 flex items-center justify-center z-50 bg-[#ffffff51] bg-opacity-50" : "hidden"}`}
+  >
+    <ImageCard image = {data.image} onClose = {imagehideshowchat}/>
+
+  </div>
         
                     {/* Main Chat */}
                     <div className="flex-1 flex flex-col h-screen bg-[#56A7A7] shadow-lg rounded-lg">
                         {/* Header */}
                         <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-[#F9FBFC]">
                             <div className="flex items-center space-x-4">
-                                <img className="w-10 h-10 rounded-full" src="/user-profile.jpg" alt="User" />
+                            <img onClick={imagehideshowchat}
+                                  className="w-12 h-12 rounded-full object-cover" 
+                                  src={data.image && data.image.trim() !== "" ? data.image : "/default-user-icon.png"} 
+                                                                    alt="User" 
+/>
                                 <div onClick={()=>{handleProfilehideshow()}}>
                                     <h2 className="text-lg font-bold">{data.username}</h2>
                                     <p className={`text-sm ${onlineUsers[params.phoneNumber] ? "text-green-500" : "text-gray-400"}`}>

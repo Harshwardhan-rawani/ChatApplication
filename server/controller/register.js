@@ -1,4 +1,5 @@
 const User = require("../model/register");
+const Contact =require("../model/contact")
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
@@ -10,9 +11,11 @@ exports.registerUser = async (req, res) => {
   try {
     const { username, phoneNumber, password } = req.body;
 
-    
-    if (!username || !phoneNumber || !password) {
+    if (!username || !phoneNumber || !password) 
+      {
+
       return res.status(400).json({ message: "All fields are required" });
+    
     }
 
     const userExists = await User.findOne({ phoneNumber });
@@ -71,20 +74,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-exports.getContact = async(req,res)=>{
-  if(req.query.category == "All"){
-    try {
-      const users = await User.find({}, "username phoneNumber"); // Fetch username and phone number
-      res.json(users);
-    } catch (error) {
-      res.status(500).json({ message: "Server error", error });
-    }
-  }
-  else if(req.query.category == "Contact"){
-    
-  }
 
-}
 
 
 exports.getChatUser = async (req, res) => {
@@ -104,3 +94,44 @@ exports.getChatUser = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
+exports.updateContact = async(req,res)=>{
+  try {
+    const { id } = req.params;
+    const { about } = req.body;
+
+    let updateData = { about };
+
+
+    if (req.file) {
+      updateData.image = req.file.path; 
+    }
+
+    // Update user in database
+    const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!updatedUser) return res.status(404).json({ message: "User not found" });
+
+    res.json({ message: "Profile updated", user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating profile", error: error.message });
+  }
+}
+
+exports.getprofile = async(req,res)=>{
+  try {
+    const { id } = req.params;
+   
+
+    const user = await User.findOne({ phoneNumber });
+
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+} catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Internal server error" });
+}
+}

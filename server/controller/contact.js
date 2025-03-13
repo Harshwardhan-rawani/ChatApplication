@@ -4,9 +4,8 @@ const jwt = require("jsonwebtoken");
 
 const createUser = async (req, res) => {
   try {
-    const { id, contactId, username, phoneNumber } = req.body;
-    
-    if (!id || !contactId || !username || !phoneNumber) {
+    const { id, contactId } = req.body;
+    if (!id || !contactId) {
       return res.status(400).json({ message: "ID, Contact ID, Username, and Phone Number are required" });
     }
 
@@ -17,7 +16,7 @@ const createUser = async (req, res) => {
       
       user = new Contact({
         id,
-        contact: [{ id: contactId, username : username,phoneNumber: phoneNumber }],
+        contact: [{ id: contactId }],
       });
 
       await user.save();
@@ -31,7 +30,7 @@ const createUser = async (req, res) => {
     }
 
 
-    user.contact.push({ id: contactId, username, phoneNumber });
+    user.contact.push({ id: contactId});
 
  
     await user.save();
@@ -60,27 +59,15 @@ const getContact = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const Id = decoded.id; 
-    const { category } = req.query;
-    if (category === "All") {
-      const users = await User.find({});
-  
-      const filteredUsers = users.filter(user => !Id.includes(user._id.toString()));
-    
-      return res.json(filteredUsers);
-    }
-    else if (category === "Contact" || category === "Active") {
+
 
       const user = await Contact.findOne({ id: Id });
-
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
    
       return res.json(user.contact);
-    }
- 
-
-    res.status(400).json({ message: "Invalid category" });
+  
   } catch (error) {
     console.error("Error fetching contacts:", error);
     res.status(500).json({ message: "Server error", error: error.message });

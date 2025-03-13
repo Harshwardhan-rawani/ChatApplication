@@ -1,5 +1,5 @@
 const express = require("express");
-const { userDetails } = require("../controller/userDetails");
+const { userDetails, getAlluser } = require("../controller/userDetails");
 const router = express.Router();
 const jwt = require("jsonwebtoken")
 
@@ -16,5 +16,6 @@ const authenticateToken = (req, res, next) => {
     });
 };
 router.get("/api/me",authenticateToken, userDetails);
+router.get("/api/All",getAlluser)
 
 module.exports = router;

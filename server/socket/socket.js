@@ -27,6 +27,21 @@ const setupSocket = (server) => {
             io.emit("updateUserStatus", { onlineUsers });
         });
 
+        socket.on("markMessagesAsRead", async ({ senderId, receiverId }) => {
+            try {
+              await Message.updateMany(
+                { senderId, receiverId, read: false },
+                { $set: { read: true } }
+              );
+          
+              // Notify the sender that their messages were read
+              io.to(senderId).emit("messagesRead", { senderId, receiverId });
+            } catch (error) {
+              console.error("Error marking messages as read", error);
+            }
+          });
+          
+
         socket.on("sendMessage", async ({ senderId, receiverId, message ,date,time }) => {
             if (!senderId || !receiverId || !message) {
                 console.error("sendMessage failed: Missing senderId, receiverId, or message");
@@ -35,7 +50,7 @@ const setupSocket = (server) => {
 
             try {
                 // Save message to MongoDB
-                const newMessage = new Message({ senderId, receiverId, message,date,time });
+                const newMessage = new Message({ senderId, receiverId, message,date,time ,read: false});
               
                 await newMessage.save();
 

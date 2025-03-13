@@ -12,7 +12,7 @@ const ProfileCard = ({ image, name, phone, about, isOnline, onVoiceCall, onVideo
             </button>
 
             {/* Profile Image */}
-            <img className="w-24 h-24 rounded-full border-4 border-green-400" src={image} alt={name} />
+            <img className="w-24 h-24 rounded-full border-4 border-gray-400" src={image} alt={name} />
 
             {/* Name & Status */}
             <h2 className="text-xl font-bold mt-3">{name}</h2>

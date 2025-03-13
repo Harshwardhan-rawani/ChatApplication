@@ -6,6 +6,7 @@ import PrivateRoute from "./PrivateRoute";
 import "./App.css"
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
+import Selfcard from "./component/Selfcard";
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
                     {/* Public Routes */}
                     <Route path="/register" element={<Registration />} />
                     <Route path="/login" element={<Login />} />
+                   
                     <Route element={<PrivateRoute isAuthenticated={isAuthenticated} />}>
                         <Route path="/" element={<Chat />} />
                         <Route path="/:phoneNumber" element={<Chat />} />

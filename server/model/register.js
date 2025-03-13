@@ -13,6 +13,14 @@ const userSchema = new mongoose.Schema({
     match: [/^\d{10}$/, "Phone number must be 10 digits"],
     unique: true, // Ensure phone number is unique
   },
+  image: {
+    type: String,
+    default: "", 
+  },
+  about: {
+    type: String,
+    default : ""
+  },
   password: {
     type: String,
     required: true,
