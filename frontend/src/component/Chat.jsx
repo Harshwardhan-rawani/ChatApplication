@@ -115,11 +115,12 @@ function Chat() {
   const truefalse = ()=>{
     setprofiletrue(!profiletrue)
   }
-    
+    const [socketid,setSocketId] = useState(null);
   useEffect(() => {
     if (userId) {
-        socket.on("updateUserStatus", ({ onlineUsers }) => {
+        socket.on("updateUserStatus", ({ onlineUsers,socketId }) => {
             setOnlineUsers(onlineUsers); 
+            setSocketId(socketId)
            
         });
     }
@@ -128,6 +129,7 @@ function Chat() {
         socket.off("updateUserStatus");
     };
 }, [userId]);
+
 
     useEffect(() => {
         socket.on("receiveMessage", (data) => {
@@ -260,6 +262,8 @@ function Chat() {
     <ImageCard image = {data.image} onClose = {imagehideshowchat}/>
 
   </div>
+  
+  
         
                     {/* Main Chat */}
                     <div className="flex-1 flex flex-col h-screen bg-[#56A7A7] shadow-lg rounded-lg">
@@ -272,7 +276,7 @@ function Chat() {
                                                                     alt="User" 
 />
                                 <div onClick={()=>{handleProfilehideshow()}}>
-                                    <h2 className="text-lg font-bold">{data.username}</h2>
+                                    <h2 className="text-lg font-bold">{data.username} </h2>
                                     <p className={`text-sm ${onlineUsers[params.phoneNumber] ? "text-green-500" : "text-gray-400"}`}>
                                         {onlineUsers[params.phoneNumber] ? "Online" : "Offline"}
                                     </p>

@@ -109,6 +109,7 @@ exports.updateContact = async(req,res)=>{
 
     // Update user in database
     const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
+    
 
     if (!updatedUser) return res.status(404).json({ message: "User not found" });
 

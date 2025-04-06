@@ -24,7 +24,7 @@ const setupSocket = (server) => {
             onlineUsers[userId] = "online" ; 
 
             console.log(`User ${name} (ID: ${userId}) registered with socket ${socket.id}`);
-            io.emit("updateUserStatus", { onlineUsers });
+            io.emit("updateUserStatus", { onlineUsers,socketId : socket.id });
         });
 
         socket.on("markMessagesAsRead", async ({ senderId, receiverId }) => {
@@ -65,6 +65,26 @@ const setupSocket = (server) => {
                 console.error("Error saving message:", error);
             }
         });
+        socket.on("join-room", (roomId, userId) => {
+            socket.join(roomId);
+            socket.to(roomId).emit("user-connected", userId);
+        
+            socket.on("disconnect", () => {
+              socket.to(roomId).emit("user-disconnected", userId);
+            });
+          });
+        
+          socket.on("offer", ({ roomId, offer }) => {
+            socket.to(roomId).emit("receive-offer", offer);
+          });
+        
+          socket.on("answer", ({ roomId, answer }) => {
+            socket.to(roomId).emit("receive-answer", answer);
+          });
+        
+          socket.on("ice-candidate", ({ roomId, candidate }) => {
+            socket.to(roomId).emit("receive-ice-candidate", candidate);
+          });
 
         socket.on("disconnect", () => {
             const disconnectedUser = Object.keys(users).find(userId => users[userId] === socket.id);

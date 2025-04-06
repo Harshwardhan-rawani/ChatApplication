@@ -28,6 +28,5 @@ router.put("/api/users/update-profile/:id",upload.single("image"),updateContact)
 // Login Route
 router.post("/login", loginUser);
 router.get("/api/data/:phoneNumber", getChatUser);
-router.get("/api/users/profile/:id",getprofile);
 
 module.exports = router;
