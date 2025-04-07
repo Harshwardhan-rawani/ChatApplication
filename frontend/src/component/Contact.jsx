@@ -80,8 +80,19 @@ function Contact({user,fun,funself,ihs}) {
         fetchedData = Alluser?.filter((contact) => allUserIds.has(String(contact._id)));
       } 
       else if (selectedCategory === "Active") {
-        // Show only online users
-        fetchedData = contacts.filter((user )=> onlineUsers?.[user.phoneNumber]=== "online");
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/contact`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      
+        // Step 1: Match contact IDs from backend with Alluser list
+        const allUserIds = new Set(response.data.map((user) => String(user.id)));
+      
+        const Data = Alluser?.filter((contact) => allUserIds.has(String(contact._id))) || [];
+      
+        // Step 2: Filter only online users from the matched contacts
+        fetchedData = Data.filter(
+          (user) => onlineUsers?.[user.phoneNumber] === "online"
+        );
       }
   
       setContacts(fetchedData);
@@ -116,18 +127,6 @@ function Contact({user,fun,funself,ihs}) {
     contact.username?.toLowerCase().startsWith(searchTerm.toLowerCase().trim())
   );
 
-  const markMessagesAsRead = (senderId, receiverId) => {
-    if (!socket) return;
-  
- 
-    socket.emit("markMessagesAsRead", { senderId, receiverId });
-  
-  
-    setUnreadCounts((prevCounts) => ({
-      ...prevCounts,
-      [senderId]: 0, 
-    }));
-  };
 
 
   return (
