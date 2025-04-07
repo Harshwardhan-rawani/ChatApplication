@@ -67,33 +67,55 @@ function Contact({user,fun,funself,ihs}) {
       let fetchedData = [];
   
       if (selectedCategory === "All") {
-        fetchedData = Alluser || [];
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/contact`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      
+        // Step 1: Get contact user IDs from backend
+        const allUserIds = new Set(response.data.map((user) => String(user.id)));
+      
+        // Step 2: Get matching contacts from Alluser
+        const matchedContacts = (Alluser || []).filter((contact) =>
+          !allUserIds.has(String(contact._id))
+        );
+        fetchedData = matchedContacts || [];
       } 
       else if (selectedCategory === "Contact") {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/contact`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
       
         const allUserIds = new Set(response.data.map((user) => String(user.id)));
       
-        fetchedData = Alluser?.filter((contact) => allUserIds.has(String(contact._id)));
-      } 
+        const filteredUsers = (Alluser || []).filter((contact) =>
+          allUserIds.has(String(contact._id))
+        );
+      
+        fetchedData = filteredUsers.length > 0 ? filteredUsers : []; // Ensures fallback to empty array
+      }
+      
       else if (selectedCategory === "Active") {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/contact`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       
-        // Step 1: Match contact IDs from backend with Alluser list
+        // Step 1: Get contact user IDs from backend
         const allUserIds = new Set(response.data.map((user) => String(user.id)));
       
-        const Data = Alluser?.filter((contact) => allUserIds.has(String(contact._id))) || [];
+        // Step 2: Get matching contacts from Alluser
+        const matchedContacts = (Alluser || []).filter((contact) =>
+          allUserIds.has(String(contact._id))
+        );
       
-        // Step 2: Filter only online users from the matched contacts
-        fetchedData = Data.filter(
+        // Step 3: Filter only online users from the matched contacts
+        const onlineContacts = matchedContacts.filter(
           (user) => onlineUsers?.[user.phoneNumber] === "online"
         );
+      
+        // Step 4: Set the data, fallback to empty array if none
+        fetchedData = onlineContacts.length > 0 ? onlineContacts : [];
       }
+      
   
       setContacts(fetchedData);
     } catch (error) {
